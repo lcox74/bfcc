@@ -12,10 +12,11 @@ func usage() {
 	fmt.Fprintln(os.Stderr, `usage: bfcc <command> [options] <file>
 
 commands:
-  run [-O level] <file>          Run the program (default -O 2)
-  asm [-O level] [-o out] <file> Output GAS assembly (x86_64 Linux)
-  tokens <file>                  Dump tokenizer output
-  ir [-O level] <file>           Dump IR (default -O 0)`)
+  build [-O level] [-o out] <file> Output ELF64 executable (x86_64 Linux)
+  run [-O level] <file>            Run the program (default -O 2)
+  asm [-O level] [-o out] <file>   Output GAS assembly (x86_64 Linux)
+  tokens <file>                    Dump tokenizer output
+  ir [-O level] <file>             Dump IR (default -O 0)`)
 	os.Exit(1)
 }
 
@@ -53,6 +54,8 @@ func main() {
 	args := os.Args[2:]
 
 	switch cmd {
+	case "build":
+		cmdBuild(args)
 	case "tokens":
 		cmdTokens(args)
 	case "ir":

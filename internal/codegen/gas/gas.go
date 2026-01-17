@@ -14,9 +14,6 @@ const (
 	sysExit  = 60
 )
 
-// TapeSize is the size of the Brainfuck tape in bytes.
-const TapeSize = 30000
-
 // Generator produces GAS (AT&T syntax) assembly from IR operations.
 type Generator struct {
 	ops     []core.Op
@@ -64,7 +61,7 @@ func (g *Generator) Generate() string {
 // emitHeader outputs the assembly file header with BSS and text sections.
 func (g *Generator) emitHeader() {
 	fmt.Fprintf(&g.out, ".section .bss\n")
-	fmt.Fprintf(&g.out, "    .lcomm tape, %d\n", TapeSize)
+	fmt.Fprintf(&g.out, "    .lcomm tape, %d\n", core.TapeSize)
 	fmt.Fprintf(&g.out, "\n")
 	fmt.Fprintf(&g.out, ".section .text\n")
 	fmt.Fprintf(&g.out, ".globl _start\n")

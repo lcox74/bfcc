@@ -27,6 +27,9 @@
 //	JNZ target ; conditional jump if cell != 0
 package core
 
+// TapeSize is the size of the Brainfuck tape in bytes (traditional 30KB).
+const TapeSize = 30000
+
 // Position represents a location in the source file.
 type Position struct {
 	Offset int // byte offset from start of file

@@ -23,3 +23,7 @@ ir file *opts:
 # Output GAS assembly (x86_64 Linux)
 asm file *opts:
     go run ./cmd/bfcc asm {{opts}} {{file}}
+
+# Compile to ELF64 executable (x86_64 Linux)
+compile file *opts:
+    go run ./cmd/bfcc build {{opts}} {{file}}

@@ -63,22 +63,34 @@ After this stage we can then perform more optimisations ontop like:
 
 ### Codegen
 
-Once we have optimised IR, we generate GAS (GNU Assembler) output
-targeting x86_64 Linux. The code generator:
+Once we have optimised IR, we can generate output in two formats:
+
+1. **Native ELF binary** (recommended) - produces a standalone Linux x86_64 executable directly
+2. **GAS assembly** - produces GNU Assembler source that requires external tools to link
+
+The code generator:
 
 - Uses R13 as the tape base pointer and R12 as the data pointer offset. The
   `r12-r15` are registers that are usually safe to use.
-- Allocates a 30,000 byte tape in BSS (global variable)
+- Allocates a 30,000 byte tape in BSS (global variable) zero-initialized by 
+  kernel
 - Emits syscalls for I/O (read/write) via helper functions
 - Generates labels only where needed (jump targets)
 
-To compile and run the generated assembly:
+To compile and run directly:
 
 ```bash
-bfcc asm program.bf              # generates program.s
-as -o program.o program.s        # assemble
-ld -o program program.o          # link
-./program                        # run
+bfcc build -o program program.bf  # generates native ELF executable
+./program                         # run
+```
+
+Or using GAS assembly (requires `as` and `ld`):
+
+```bash
+bfcc asm program.bf               # generates program.s
+as -o program.o program.s         # assemble
+ld -o program program.o           # link
+./program                         # run
 ```
 
 ## Usage
@@ -87,10 +99,20 @@ ld -o program program.o          # link
 bfcc <command> [options] <file>
 
 commands:
-  run [-O level] <file>          Run the program via VM (default -O 2)
-  asm [-O level] [-o out] <file> Output GAS assembly (x86_64 Linux)
-  tokens <file>                  Dump tokenizer output
-  ir [-O level] <file>           Dump IR (default -O 0)
+  build [-O level] [-o out] <file> Output ELF64 executable (x86_64 Linux)
+  run [-O level] <file>            Run the program via VM (default -O 2)
+  asm [-O level] [-o out] <file>   Output GAS assembly (x86_64 Linux)
+  tokens <file>                    Dump tokenizer output
+  ir [-O level] <file>             Dump IR (default -O 0)
+```
+
+Or using the justfile:
+
+```bash
+just compile testdata/helloworld.bf -o hello
+just run testdata/helloworld.bf
+just asm testdata/helloworld.bf
+just ir testdata/helloworld.bf -O 2
 ```
 
 ### IR Dump

@@ -1,5 +1,42 @@
 package core
 
+// OptLevel represents the optimization level for the IR.
+type OptLevel int
+
+const (
+	O0 OptLevel = iota // No optimizations
+	O1                 // Basic: mergeAdjacent, removeNoOps
+	O2                 // Full: all passes
+)
+
+// OptimiseWithLevel applies optimizations based on the specified level.
+func OptimiseWithLevel(ops []Op, level OptLevel) []Op {
+	if len(ops) == 0 || level == O0 {
+		return ops
+	}
+
+	result := ops
+	for {
+		prev := len(result)
+
+		// O2: Full optimizations (clearLoops, removeEmptyLoops)
+		if level >= O2 {
+			result = clearLoops(result)
+			result = removeEmptyLoops(result)
+		}
+
+		// O1+: Basic optimizations (mergeAdjacent, removeNoOps)
+		result = mergeAdjacent(result)
+		result = removeNoOps(result)
+
+		if len(result) == prev {
+			break
+		}
+	}
+
+	return result
+}
+
 // Optimise applies peephole and structural optimisations to the IR.
 // It returns a new slice with the optimised operations.
 func Optimise(ops []Op) []Op {

@@ -7,6 +7,14 @@ default:
 build:
     go build -o bin/bfcc ./cmd/bfcc
 
-# Run the compiler on a file
+# Run a brainfuck file (with -O2 optimization by default)
 run file:
-    go run ./cmd/bfcc {{file}}
+    go run ./cmd/bfcc run {{file}}
+
+# Dump tokenizer output
+tokens file:
+    go run ./cmd/bfcc tokens {{file}}
+
+# Dump IR (default -O 0, or specify -O 1/-O 2)
+ir file *opts:
+    go run ./cmd/bfcc ir {{opts}} {{file}}

@@ -63,16 +63,39 @@ After this stage we can then perform more optimisations ontop like:
 
 ### Codegen
 
-Once we have a list of commands we are happy with, we just need to
-loop through and write the corresponding assembly commands to a file.
-I'm planning to use the Flat Assembler (fasm) for this and support
-`Linux x86_64` for starters. I might revisit and add WebAssembly or
-maybe even `Darwin ARM64`.
+Once we have optimised IR, we generate GAS (GNU Assembler) output
+targeting x86_64 Linux. The code generator:
 
-## Tooling
+- Uses R13 as the tape base pointer and R12 as the data pointer offset. The
+  `r12-r15` are registers that are usually safe to use.
+- Allocates a 30,000 byte tape in BSS (global variable)
+- Emits syscalls for I/O (read/write) via helper functions
+- Generates labels only where needed (jump targets)
 
-I would like to add random tooling to help with development. For example
-an IR Dump where you can see the generated IR list:
+To compile and run the generated assembly:
+
+```bash
+bfcc asm program.bf              # generates program.s
+as -o program.o program.s        # assemble
+ld -o program program.o          # link
+./program                        # run
+```
+
+## Usage
+
+```bash
+bfcc <command> [options] <file>
+
+commands:
+  run [-O level] <file>          Run the program via VM (default -O 2)
+  asm [-O level] [-o out] <file> Output GAS assembly (x86_64 Linux)
+  tokens <file>                  Dump tokenizer output
+  ir [-O level] <file>           Dump IR (default -O 0)
+```
+
+### IR Dump
+
+The `ir` command dumps the intermediate representation:
 
 ```
 000: ADD +6
@@ -87,42 +110,11 @@ an IR Dump where you can see the generated IR list:
 009: OUT
 ```
 
-This would mean that the compiler will need some optimisation flags,
-these can be set to remove optimisations to ensure we are getting the
-right IR list for a given bit of code.
+Use `-O 0`, `-O 1`, or `-O 2` to see IR at different optimisation levels.
 
-## Intermediate Representation (IR)
+## Documentation
 
-```
-SHIFT k
-    Shift the data pointer by k cells.
-    Equivalent to: dp += k.
-
-ADD k
-    Add k to the current cell value (*dp), wrapping mod 256.
-
-ZERO
-    Set the current cell value (*dp) to zero.
-
-IN
-    Read one byte from input and store it in the current cell (*dp).
-
-OUT
-    Write the current cell value (*dp) to output as a single byte.
-
-JZ target
-    Jump to instruction index target if the current cell value (*dp) is
-    zero.
-
-JNZ target
-    Jump to instruction index target if the current cell value (*dp) is
-    non-zero.
-```
-
-- `k` is a signed integer
-- `target` is an instruction index in the IR stream
-- All arithmetic on cell values is performed modulo 256
-
-
+- [Intermediate Representation (IR)](docs/ir.md)
+- [IR to Assembly Mapping](docs/ir-to-asm.md)
 
 [Brainfuck]: https://en.wikipedia.org/wiki/Brainfuck

@@ -9,44 +9,15 @@ import (
 	"github.com/lcox74/bfcc/internal/core"
 )
 
-// RuntimeError represents an error during VM execution.
-type RuntimeError struct {
-	Msg string
-	Pos *core.Position
-	PC  int
-}
-
-func (e *RuntimeError) Error() string {
-	if e.Pos != nil {
-		return fmt.Sprintf("runtime error at PC %d (line %d, col %d): %s",
-			e.PC,
-			e.Pos.Line,
-			e.Pos.Column,
-			e.Msg,
-		)
-	}
-	return fmt.Sprintf("runtime error at PC %d: %s", e.PC, e.Msg)
-}
-
-// EOFBehavior specifies how the VM handles EOF on input.
-type EOFBehavior int
-
-const (
-	EOFZero     EOFBehavior = iota // Set cell to 0 (default)
-	EOFMinusOne                    // Set cell to 255
-	EOFNoChange                    // Leave cell unchanged
-)
-
 // VM executes Brainfuck IR operations.
 type VM struct {
-	memSize     int
-	input       io.Reader
-	output      io.Writer
-	eofBehavior EOFBehavior
-	memory      []byte
-	dp          int     // data pointer
-	pc          int     // program counter
-	ioBuf       [1]byte // reusable I/O buffer to avoid allocations
+	memSize int
+	input   io.Reader
+	output  io.Writer
+	memory  []byte
+	dp      int     // data pointer
+	pc      int     // program counter
+	ioBuf   [1]byte // reusable I/O buffer to avoid allocations
 }
 
 // VMOption is a functional option for configuring a VM.
@@ -73,24 +44,18 @@ func WithOutput(w io.Writer) VMOption {
 	}
 }
 
-// WithEOFBehavior sets the EOF handling behavior (default EOFZero).
-func WithEOFBehavior(b EOFBehavior) VMOption {
-	return func(v *VM) {
-		v.eofBehavior = b
-	}
-}
-
 // NewVM creates a new VM with the given options.
 func NewVM(opts ...VMOption) *VM {
 	vm := &VM{
-		memSize:     30000,
-		input:       os.Stdin,
-		output:      os.Stdout,
-		eofBehavior: EOFZero,
+		memSize: 30000,
+		input:   os.Stdin,
+		output:  os.Stdout,
 	}
+
 	for _, opt := range opts {
 		opt(vm)
 	}
+
 	return vm
 }
 
@@ -128,14 +93,9 @@ func (v *VM) Run(ops []core.Op) error {
 		case core.OpIn:
 			n, err := v.input.Read(v.ioBuf[:])
 			if err == io.EOF || n == 0 {
-				switch v.eofBehavior {
-				case EOFZero:
-					memory[v.dp] = 0
-				case EOFMinusOne:
-					memory[v.dp] = 255
-				case EOFNoChange:
-					// leave unchanged
-				}
+				// This shouldn't happen, but if it does then lets just treat
+				// it as a 0.
+				memory[v.dp] = 0
 			} else if err != nil {
 				return &RuntimeError{
 					Msg: fmt.Sprintf("input error: %v", err),

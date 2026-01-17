@@ -5,7 +5,7 @@ type TokenKind int
 
 // Token kinds for each Brainfuck instruction.
 const (
-	TokInvalid    TokenKind = iota // invalid/unknown token (sentinel)
+	TokInvalid    TokenKind = iota // invalid/unknown token
 	TokShiftRight                  // > : move pointer right
 	TokShiftLeft                   // < : move pointer left
 	TokAdd                         // + : increment cell
